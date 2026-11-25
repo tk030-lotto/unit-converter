@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'self'; form-action 'none'">
+  <title>単位変換ツール - 16カテゴリ対応のWeb換算ツール</title>
+  <meta name="description" content="長さ・面積・重さ・体積・温度・速度・時間・データ容量・圧力・エネルギー・仕事率・周波数・角度・電気・燃費・日本の慣用単位など、16カテゴリに対応したスマートフォン最適化の単位変換Webツールです。">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/components.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- ヘッダー -->
+    <header class="app-header">
+      <div class="brand-badge">⚡ Unit Converter</div>
+      <h1 class="app-title">単位変換ツール</h1>
+      <p class="app-subtitle">16カテゴリの単位を入力と同時に相互変換</p>
+    </header>
+
+    <!-- メインコンテンツ -->
+    <main class="app-main">
+      <!-- カテゴリ選択セクション -->
+      <section class="card category-section" aria-label="カテゴリ選択">
+        <label for="categorySelect" class="section-label">変換カテゴリ</label>
+        <div class="category-select-wrapper">
+          <select id="categorySelect" class="custom-select" aria-label="変換カテゴリの選択"></select>
+          <span class="select-arrow">▼</span>
+        </div>
+        <!-- サブグループ（電気・日本の慣用単位など） -->
+        <div id="subgroupContainer" class="subgroup-tabs" hidden role="tablist"></div>
+      </section>
+
+      <!-- 変換メインカード -->
+      <section class="card converter-card" aria-label="単位変換フォーム">
+        <!-- 変換元 -->
+        <div class="unit-row">
+          <div class="row-header">
+            <label for="fromValue" class="row-title">変換元</label>
+          </div>
+          <div class="input-group">
+            <input 
+              type="text" 
+              inputmode="decimal" 
+              id="fromValue" 
+              class="number-input" 
+              placeholder="0" 
+              value="1" 
+              autocomplete="off" 
+              aria-label="変換元の数値"
+            >
+            <div class="category-select-wrapper">
+              <select id="fromUnit" class="custom-select" aria-label="変換元の単位"></select>
+              <span class="select-arrow">▼</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- スワップ操作 -->
+        <div class="swap-divider">
+          <button id="btnSwap" class="btn-swap" type="button" title="変換元と変換先を入れ替え" aria-label="変換元と変換先の単位を入れ替え">
+            ⇅
+          </button>
+        </div>
+
+        <!-- 変換先 -->
+        <div class="unit-row">
+          <div class="row-header">
+            <span class="row-title">変換先</span>
+          </div>
+          <div class="input-group">
+            <div id="resultValue" class="result-display" role="status" aria-live="polite">0</div>
+            <div class="category-select-wrapper">
+              <select id="toUnit" class="custom-select" aria-label="変換先の単位"></select>
+              <span class="select-arrow">▼</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 入力エラー表示（R1・R7） -->
+        <div id="inputError" class="input-error" role="alert" hidden></div>
+
+        <!-- アクションバー（コピー・クリア） -->
+        <div class="actions-bar">
+          <button id="btnClear" class="btn-action" type="button" title="入力値をクリア">
+            <span>✕</span> クリア
+          </button>
+          <button id="btnCopy" class="btn-action" type="button" title="変換結果をクリップボードにコピー">
+            <span>📋</span> 結果をコピー
+          </button>
+        </div>
+
+        <!-- コピー失敗時の手動選択表示（仕様 §8） -->
+        <div id="manualCopyPanel" class="manual-copy-panel" hidden>
+          <label for="manualCopyInput" class="manual-copy-label">
+            自動コピーできないため、下の選択状態の結果を手動でコピーしてください（Ctrl+C / 長押し）
+          </label>
+          <input id="manualCopyInput" class="manual-copy-input" type="text" readonly aria-label="手動コピー用の変換結果">
+        </div>
+      </section>
+
+      <!-- 定義注記バナー（畳やgallon等の規格明記） -->
+      <aside id="notePanel" class="note-panel" hidden aria-label="単位定義の注記">
+        <span class="note-icon">ℹ️</span>
+        <span id="noteText"></span>
+      </aside>
+
+      <!-- よく使う変換ショートカット -->
+      <section class="shortcuts-section" aria-label="よく使う変換ショートカット">
+        <span class="section-label">よく使う変換</span>
+        <div id="shortcutsContainer" class="shortcuts-grid"></div>
+      </section>
+    </main>
+
+    <!-- フッター -->
+    <footer class="app-footer">
+      <p>&copy; 2026 Zero Dev (tk030) · MIT License · <a href="https://zero-dev.jp/" target="_blank" rel="noopener noreferrer">zero-dev.jp</a> · 免責（無保証・参考値）</p>
+      <p class="footer-note">ブラウザ内完結 / 外部通信なし・入力値は端末内で処理</p>
+    </footer>
+  </div>
+
+  <!-- トースト通知 -->
+  <div id="toast" class="toast-container" role="alert" aria-live="assertive">
+    <span id="toastIcon" aria-hidden="true">✓</span>
+    <span id="toastMessage">コピーしました</span>
+  </div>
+
+  <!-- スクリプト読み込み (ES Modules) -->
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
